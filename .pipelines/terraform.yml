@@ -1,0 +1,96 @@
+parameters:
+  - name: env
+    displayName: Select the server
+    type: string
+    default: dev
+    values:
+    - dev
+    - main
+  - name: action
+    displayName: Select the action
+    type: string
+    default: plan
+    values:
+    - plan
+    - apply
+
+trigger:
+  paths:
+    include:
+    - common/modules/vm/*.tf
+    - main-srv/*.tf
+    - dev-srv/*.tf
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: provisioning
+  displayName: Provisioning ${{ parameters.env }}
+  jobs:
+  - job: Provisioning
+    steps:
+    - script: |
+          curl -s https://install.zerotier.com | sudo bash
+          ZEROTIER_ID="$(sudo zerotier-cli status | awk '{print$3}')"
+          echo "##vso[task.setvariable variable=nodeid]$ZEROTIER_ID"
+          sudo zerotier-cli join $(ZEROTIER_NETWORK)
+      displayName: 'Zerotier Install'
+    - script: |
+          curl -X POST "https://my.zerotier.com/api/v1/network/$(ZEROTIER_NETWORK)/member/$(nodeid)" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: bearer $(ZEROTIER_TOKEN)" -d '{ "config": {"authorized": true}, "name": "azure", "description": ""  }'
+      displayName: 'Zerotier Authorization'
+    - script: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt update
+          sudo apt install terraform -y
+      displayName: Terraform Install 
+    - task: DownloadSecureFile@1
+      name: terraformrc
+      displayName: 'Download .terraformrc'
+      inputs:
+        secureFile: '.terraformrc'
+    - task: Bash@3
+      displayName: 'Set .terraformrc permissions'
+      inputs:
+        targetType: 'inline'
+        script: |
+          chmod 400 $(terraformrc.secureFilePath)
+          mv $(terraformrc.secureFilePath) ~
+        workingDirectory: '$(Build.SourcesDirectory)'
+    - script: |
+        terraform init
+        terraform validate
+      displayName: 'Terraform init and validate on ${{ parameters.env }}'
+      workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.env }}'
+    - script: |
+        terraform ${{ parameters.action }} -var "pm_api_url=$(PM_API_URL)" -var "pm_password=$(PM_PASSWORD)"
+      displayName:  Terraform ${{ parameters.action }} on ${{ parameters.env }}
+      workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.env }}'
+    - script: |
+        curl -X DELETE "https://my.zerotier.com/api/v1/network/$(ZEROTIER_NETWORK)/member/$(nodeid)" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: bearer $(ZEROTIER_TOKEN)"
+      displayName: 'Zerotier Deauthorization'
+      condition: always ()  
+    - task: Bash@3
+      displayName: 'Remove terraformrc file'
+      inputs:
+        targetType: 'inline'
+        script: |
+          rm -f ~/.terraformrc
+        workingDirectory: '$(Build.SourcesDirectory)'
+      condition: always ()
+
+- stage: Cleanup
+  condition: always()
+  displayName: Cleaning-up
+  jobs:
+    - job: Cleanup
+      workspace:
+        clean: all
+      steps:
+      - checkout: none
+
