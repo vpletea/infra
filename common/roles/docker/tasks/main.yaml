@@ -1,0 +1,17 @@
+- name: Add docker signing key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+- name: Add docker repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+- name: Install required software
+  apt:
+    pkg:
+    - docker-ce
+    - docker-compose
+- name: Add devops user to docker group
+  ansible.builtin.user:
+    name: devops
+    group: docker
