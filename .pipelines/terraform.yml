@@ -18,8 +18,8 @@ trigger:
   paths:
     include:
     - common/modules/vm/*.tf
-    - main-srv/*.tf
-    - dev-srv/*.tf
+    - main/*.tf
+    - dev/*.tf
 
 pool:
   vmImage: ubuntu-latest
