@@ -12,7 +12,7 @@ parameters:
     default: plan
     values:
     - plan
-    - apply
+    - apply --auto-approve
 
 trigger:
   paths:
