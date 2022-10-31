@@ -3,19 +3,19 @@
     pkg:
       - apt-transport-https
       - gnupg2
-      - qemu-guest-agent
+#       - qemu-guest-agent
       - jq
       - prometheus-node-exporter
 - name: Set timezone to Europe/Bucharest
   timezone:
     name: Europe/Bucharest
-- name: Enable and start the service qemu-guest-agent
-  ansible.builtin.service:
-    name: qemu-guest-agent
-    enabled: yes
-    state: started
-- name: Enable and start the service prometheus-node-exporter
-  ansible.builtin.service:
-    name: qemu-guest-agent
-    enabled: yes
-    state: started
+# - name: Enable and start the service qemu-guest-agent
+#   ansible.builtin.service:
+#     name: qemu-guest-agent
+#     enabled: yes
+#     state: started
+# - name: Enable and start the service prometheus-node-exporter
+#   ansible.builtin.service:
+#     name: qemu-guest-agent
+#     enabled: yes
+#     state: started
