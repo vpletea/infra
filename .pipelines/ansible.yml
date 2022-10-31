@@ -50,13 +50,6 @@ stages:
           chmod 400 $(sshkey.secureFilePath)
         workingDirectory: '$(Build.SourcesDirectory)'
     - task: Bash@3
-      displayName: 'Install Ansible modules'
-      inputs:
-        targetType: 'inline'
-        script: |
-          ansible-galaxy collection install community.docker
-        workingDirectory: '$(Build.SourcesDirectory)'  
-    - task: Bash@3
       displayName: 'Running playbook on ${{ parameters.env }}'
       inputs:
         targetType: 'inline'
