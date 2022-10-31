@@ -22,7 +22,7 @@ resource "proxmox_vm_qemu" "vm" {
   name        = var.vm_name
   target_node = var.target_node
   clone       = var.template
-  agent       = 1
+#   agent       = 0
   onboot      = true
   os_type     = "cloud-init"
   cores       = var.cores
