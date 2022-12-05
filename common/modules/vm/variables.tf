@@ -8,7 +8,7 @@ variable "vm_name" {
 
 variable "target_node" {
   type    = string
-  default = "pve-srv"
+  default = "pve"
 }
 
 variable "template" {
